@@ -5,8 +5,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -57,6 +57,7 @@ public class VoiceListenerService extends Service {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, new Locale("hi", "IN"));
+            intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
 
             speechRecognizer.setRecognitionListener(new RecognitionListener() {
                 @Override public void onReadyForSpeech(Bundle params) {}
@@ -73,16 +74,15 @@ public class VoiceListenerService extends Service {
                 @Override
                 public void onResults(Bundle results) {
                     ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && matches.size() > 0) {
-                        CommandHandler.handleCommand(getApplicationContext(), matches.get(0));
+                    if (matches != null && !matches.isEmpty()) {
+                        String command = matches.get(0).toLowerCase();
+                        CommandHandler.handleCommand(getApplicationContext(), command);
                     }
-                    restartListening();
+                    restartListening(); // ✅ Immediately start listening again
                 }
 
-                @Override
-                public void onPartialResults(Bundle partialResults) {}
-                @Override
-                public void onEvent(int eventType, Bundle params) {}
+                @Override public void onPartialResults(Bundle partialResults) {}
+                @Override public void onEvent(int eventType, Bundle params) {}
             });
 
             speechRecognizer.startListening(intent);
@@ -90,8 +90,10 @@ public class VoiceListenerService extends Service {
     }
 
     private void restartListening() {
-        speechRecognizer.destroy();
-        startListening();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+        }
+        startListening(); // 🔁 Continuous loop
     }
 
     @Override
