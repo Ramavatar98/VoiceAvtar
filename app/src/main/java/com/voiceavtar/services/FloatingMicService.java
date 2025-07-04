@@ -3,46 +3,50 @@ package com.voiceavtar.services;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.voiceavtar.R;
 
 public class FloatingMicService extends Service {
 
     private WindowManager windowManager;
-    private View micOverlay;
+    private ImageView micIcon;
     private boolean isListening = false;
-
-    @Override
-    public IBinder onBind(Intent intent) { return null; }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        micOverlay = LayoutInflater.from(this).inflate(R.layout.empty_layout, null);
-        ImageView mic = new ImageView(this);
-        mic.setImageResource(R.drawable.mic_icon);
+        micIcon = new ImageView(this);
+        micIcon.setImageResource(R.drawable.mic_icon); // ✅ Add mic_icon.png in res/drawable
+
+        int layoutFlag;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutFlag = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutFlag = WindowManager.LayoutParams.TYPE_PHONE;
+        }
 
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 150, 150,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                layoutFlag,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
         );
-
         params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.x = 100;
-        params.y = 300;
+        params.x = 200;
+        params.y = 400;
 
-        mic.setOnTouchListener(new View.OnTouchListener() {
+        micIcon.setOnTouchListener(new View.OnTouchListener() {
             private int initialX, initialY;
             private float initialTouchX, initialTouchY;
 
@@ -57,28 +61,31 @@ public class FloatingMicService extends Service {
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
-                        params.x = initialX + (int)(event.getRawX() - initialTouchX);
-                        params.y = initialY + (int)(event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(mic, params);
+                        params.x = initialX + (int) (event.getRawX() - initialTouchX);
+                        params.y = initialY + (int) (event.getRawY() - initialTouchY);
+                        windowManager.updateViewLayout(micIcon, params);
                         return true;
 
                     case MotionEvent.ACTION_UP:
-                        toggleMicListening();
+                        toggleMic();
                         return true;
                 }
                 return false;
             }
         });
 
-        windowManager.addView(mic, params);
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        windowManager.addView(micIcon, params);
     }
 
-    private void toggleMicListening() {
+    private void toggleMic() {
         Intent intent = new Intent(this, VoiceListenerService.class);
         if (!isListening) {
             startService(intent);
+            Toast.makeText(this, "🎤 Mic चालू", Toast.LENGTH_SHORT).show();
         } else {
             stopService(intent);
+            Toast.makeText(this, "🎙️ Mic बंद", Toast.LENGTH_SHORT).show();
         }
         isListening = !isListening;
     }
@@ -86,6 +93,14 @@ public class FloatingMicService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (micOverlay != null) windowManager.removeView(micOverlay);
+        if (micIcon != null && windowManager != null) {
+            windowManager.removeView(micIcon);
+        }
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }
