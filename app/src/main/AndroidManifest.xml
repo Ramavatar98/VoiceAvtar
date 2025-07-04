@@ -1,13 +1,20 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.voiceavtar">
+
+    <!-- 🎤 Voice/Mic access -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- 🪟 Overlay access -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    
+
+    <!-- 🚦 Foreground Service for mic -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:allowBackup="true"
         android:label="Voice Avtar"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <!-- ✅ Fix added here -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
