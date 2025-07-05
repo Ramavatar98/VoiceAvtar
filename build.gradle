@@ -1,12 +1,13 @@
 buildscript {
-    ext.kotlin_version = '1.9.23'
-    ext.agp_version = '8.4.0' // Updated Android Gradle Plugin
-
+    ext {
+        kotlin_version = '1.9.23'
+        agp_version = '8.4.0'
+    }
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
-
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -20,7 +21,7 @@ allprojects {
     }
 }
 
-// Add JDK 17 compatibility
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
+// FIXED: Use the correct clean task syntax
+tasks.named('clean', Delete) {
+    delete rootProject.buildDir
 }
