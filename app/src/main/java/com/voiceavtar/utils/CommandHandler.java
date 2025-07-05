@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log; // Added import
 import android.widget.Toast;
 
 public class CommandHandler {
