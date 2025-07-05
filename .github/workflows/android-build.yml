@@ -11,7 +11,7 @@ jobs:
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
-      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx2048m -Dfile.encoding=UTF-8"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx1024m -Dfile.encoding=UTF-8"
 
     steps:
       - name: Checkout Repository
@@ -28,18 +28,19 @@ jobs:
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
 
       - name: Install Android SDK Components
         run: |
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
 
-      - name: Create Minimal Gradle Setup
+      - name: Create Gradle Wrapper
         run: |
+          # Create minimal Gradle setup
           echo "rootProject.name = 'VoiceAvtar'" > settings.gradle
           echo "include ':app'" >> settings.gradle
           
@@ -58,12 +59,15 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          ./gradlew :app:assembleDebug \
+          # Use direct Java execution to avoid Gradle daemon issues
+          java -Xmx1024m -XX:MaxMetaspaceSize=512m \
+            -Dorg.gradle.jvmargs="-Xmx1024m -XX:MaxMetaspaceSize=512m" \
+            -jar gradle/wrapper/gradle-wrapper.jar \
+            :app:assembleDebug \
             --no-daemon \
             --stacktrace \
             --info \
-            --max-workers=2 \
-            -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+            --max-workers=1
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
