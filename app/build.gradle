@@ -12,6 +12,9 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
+
+        // Required for overlay and microphone
+        manifestPlaceholders = [appAuthRedirectScheme: 'com.voiceavtar']
     }
 
     buildTypes {
@@ -25,16 +28,31 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
+    // Core AndroidX
+    implementation 'androidx.core:core:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // Optional: if you use ViewModel, Lifecycle, etc
+    // Lifecycle
     implementation 'androidx.lifecycle:lifecycle-runtime:2.6.2'
 
-    // Optional: JitPack library example (only if needed)
-    // implementation 'com.github.User:Repo:Tag'
+    // Optional: For voice or overlay service compatibility
+    implementation 'androidx.annotation:annotation:1.6.0'
+}
+
+// ✅ Fix duplicate class error with Kotlin libs
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+    }
 }
