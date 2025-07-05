@@ -28,26 +28,31 @@ jobs:
 
       - name: Create Gradle Wrapper
         run: |
-          # Create the wrapper files
-          mkdir -p gradle/wrapper
-          echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
-          echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
-          echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
-          echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          # Create minimal gradle setup
+          echo "rootProject.name = 'VoiceAvtar'" > settings.gradle
+          echo "include ':app'" >> settings.gradle
           
-          # Download the wrapper script
-          curl -s -L https://raw.githubusercontent.com/gradle/gradle/master/gradlew -o gradlew
+          # Create gradle wrapper properties
+          mkdir -p gradle/wrapper
+          cat << EOF > gradle/wrapper/gradle-wrapper.properties
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+          
+          # Download gradle wrapper
+          curl -sLO https://raw.githubusercontent.com/gradle/gradle/master/gradlew
           chmod +x gradlew
           
-          # Download the wrapper JAR
-          curl -s -L https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          # Download wrapper jar
+          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
+            https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
 
       - name: Build Debug APK
         run: |
-          # Grant execute permission
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
