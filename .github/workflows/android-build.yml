@@ -34,31 +34,31 @@ jobs:
 
       - name: Install Android SDK Components
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install 'platforms;android-34' 'build-tools;34.0.0' 'platform-tools'
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
-      - name: Create Gradle Setup
+      - name: Create Gradle Wrapper & Project Settings
         run: |
-          cat > settings.gradle <<EOF
+          cat > settings.gradle <<"EOF"
           pluginManagement {
-            repositories {
-              google()
-              gradlePluginPortal()
-              mavenCentral()
-            }
+              repositories {
+                  google()
+                  gradlePluginPortal()
+                  mavenCentral()
+              }
           }
           dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-            repositories {
-              google()
-              mavenCentral()
-            }
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
           }
           rootProject.name = "VoiceAvtar"
           include(":app")
           EOF
 
           mkdir -p gradle/wrapper
-          cat > gradle/wrapper/gradle-wrapper.properties <<EOF
+          cat > gradle/wrapper/gradle-wrapper.properties <<"EOF"
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-all.zip
@@ -68,7 +68,7 @@ jobs:
 
           curl -sLo gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
           chmod +x gradlew
-          curl -sLo gradle/wrapper/gradle-wrapper.jar https://downloads.gradle-dn.com/distributions/gradle-8.2-all.zip
+          curl -sLo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
 
       - name: Build Debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
@@ -76,6 +76,6 @@ jobs:
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: VoiceAvtar-debug.apk
+          name: VoiceAvtar-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           
