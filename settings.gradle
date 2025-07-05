@@ -1,36 +1,18 @@
-- name: Create Minimal Gradle Setup
-  run: |
-    # Create settings.gradle with plugin repositories
-    cat > settings.gradle <<EOF
-    pluginManagement {
-        repositories {
-            gradlePluginPortal()
-            google()
-            mavenCentral()
-        }
+pluginManagement {
+    repositories {
+        google() // ✅ Android plugins के लिए आवश्यक
+        gradlePluginPortal()
+        mavenCentral()
     }
-    dependencyResolutionManagement {
-        repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-        repositories {
-            google()
-            mavenCentral()
-        }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
     }
-    rootProject.name = 'VoiceAvtar'
-    include ':app'
-    EOF
-    
-    # Create gradle wrapper properties
-    mkdir -p gradle/wrapper
-    cat > gradle/wrapper/gradle-wrapper.properties <<EOF
-    distributionBase=GRADLE_USER_HOME
-    distributionPath=wrapper/dists
-    distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
-    zipStoreBase=GRADLE_USER_HOME
-    zipStorePath=wrapper/dists
-    EOF
-    
-    # Download gradle wrapper
-    curl -sL -o gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
-    chmod +x gradlew
-    curl -sL -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
+}
+
+rootProject.name = "VoiceAvtar"
+include(":app")
