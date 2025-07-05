@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">Voice Avtar</string>
+    
+    <!-- Notification channels -->
+    <string name="floating_mic_channel">Floating Mic</string>
+    <string name="voice_listener_channel">Voice Listener</string>
+    
+    <!-- Notification content -->
+    <string name="floating_mic_notification_title">Voice Avtar Active</string>
+    <string name="floating_mic_notification_text">Floating mic is running</string>
+    <string name="voice_listener_notification_title">🎤 Voice Avtar Active</string>
+    <string name="voice_listener_notification_text">Listening for commands...</string>
+    
+    <!-- Error messages -->
+    <string name="overlay_permission_required">Floating mic requires overlay permission!</string>
+    <string name="mic_permission_required">Mic permission required!</string>
+    <string name="notification_permission_warning">Notifications disabled - some features may not work</string>
 </resources>
