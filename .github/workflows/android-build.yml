@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -24,53 +25,60 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Android SDK Licenses
+      - name: Accept Android SDK Licenses
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
           echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
 
-      - name: Install Android SDK Components
+      - name: Install SDK Components
         run: |
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;34.0.0"
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34"
 
-      - name: Create Gradle Wrapper
+      - name: Create Gradle Wrapper and Plugin Setup
         run: |
-          # Create minimal Gradle setup
-          echo "rootProject.name = 'VoiceAvtar'" > settings.gradle
-          echo "include ':app'" >> settings.gradle
-          
+          cat > settings.gradle <<EOF
+          pluginManagement {
+              repositories {
+                  google()
+                  gradlePluginPortal()
+                  mavenCentral()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "VoiceAvtar"
+          include ":app"
+          EOF
+
           mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties <<EOF
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          distributionUrl=https\\://services.gradle.org/distributions/gradle-8.2-all.zip
           zipStoreBase=GRADLE_USER_HOME
           zipStorePath=wrapper/dists
           EOF
-          
+
           curl -sL -o gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
           chmod +x gradlew
           curl -sL -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
 
-      - name: Build Debug APK
-        run: |
-          # Use direct Java execution to avoid Gradle daemon issues
-          java -Xmx1024m -XX:MaxMetaspaceSize=512m \
-            -Dorg.gradle.jvmargs="-Xmx1024m -XX:MaxMetaspaceSize=512m" \
-            -jar gradle/wrapper/gradle-wrapper.jar \
-            :app:assembleDebug \
-            --no-daemon \
-            --stacktrace \
-            --info \
-            --max-workers=1
+      - name: Build APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          
