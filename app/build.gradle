@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android' 
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -9,31 +10,34 @@ android {
 
     defaultConfig {
         applicationId "com.voiceavtar"
-        minSdk 24  // ✅ Increased to 24 for Android 15 compatibility
+        minSdk 24  // Android 7.0 (required for Android 15 compatibility)
         targetSdk 34
         versionCode 1
         versionName "1.0"
         
-        // ✅ Required for Android 15
+        // Build config variables
         buildConfigField "String", "APPLICATION_ID", "\"$applicationId\""
+        buildConfigField "String", "BUILD_TIME", "\"${getBuildTime()}\""
         
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled true  // ✅ Enable minification
-            shrinkResources true // ✅ Enable resource shrinking
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             debuggable true
+            applicationIdSuffix ".debug"
         }
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -42,14 +46,29 @@ android {
 
     buildFeatures {
         viewBinding true
-        buildConfig true // ✅ Enable build config
+        buildConfig true
+    }
+
+    packagingOptions {
+        exclude 'META-INF/*.version'
+        exclude 'META-INF/*.kotlin_module'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/AL2.0'
+        exclude 'META-INF/LGPL2.1'
+    }
+
+    lintOptions {
+        abortOnError false
+        checkReleaseBuilds false
     }
 }
 
 dependencies {
+    // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23"
     
-    // AndroidX
+    // AndroidX Core
     implementation 'androidx.core:core-ktx:1.13.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
@@ -58,21 +77,46 @@ dependencies {
     // Lifecycle components
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.0'
     implementation 'androidx.lifecycle:lifecycle-service:2.8.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.8.0'
     
     // Speech recognition
     implementation 'androidx.speech:speech-recognition:1.0.0'
     
+    // Java 17 desugaring
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    
+    // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-// ✅ Remove duplicate Kotlin stdlib
+// Build time function for BuildConfig
+static def getBuildTime() {
+    return new Date().format("yyyy-MM-dd'T'HH:mm:ssZ", TimeZone.getTimeZone("UTC"))
+}
+
+// Kotlin compiler options
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += [
+            "-Xjvm-default=all",
+            "-opt-in=kotlin.RequiresOptIn"
+        ]
+    }
+}
+
+// Dependency version alignment
 configurations.all {
     resolutionStrategy {
         eachDependency { details ->
+            // Align Kotlin versions
             if (details.requested.group == 'org.jetbrains.kotlin') {
                 details.useVersion '1.9.23'
+            }
+            // Align AndroidX Lifecycle versions
+            if (details.requested.group.startsWith('androidx.lifecycle')) {
+                details.useVersion '2.8.0'
             }
         }
     }
