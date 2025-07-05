@@ -4,18 +4,20 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.voiceavtar.R;
 import com.voiceavtar.utils.CommandHandler;
 
 import java.util.ArrayList;
@@ -29,33 +31,29 @@ public class VoiceListenerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        startForegroundService();
-        startListening();
+        startForeground(1, createNotification());
+        startSpeechRecognition();
     }
 
-    private void startForegroundService() {
+    private Notification createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     "Voice Avtar Listening",
                     NotificationManager.IMPORTANCE_LOW
             );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(channel);
+            getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
-
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("🎤 Voice Avtar सक्रिय है")
-                .setContentText("आपकी आवाज़ सुनी जा रही है...")
-                .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("🎤 Voice Avtar Active")
+                .setContentText("Listening for commands...")
+                .setSmallIcon(R.drawable.mic_icon)
                 .build();
-
-        startForeground(1, notification);
     }
 
-    private void startListening() {
+    private void startSpeechRecognition() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Log.e("VoiceListener", "Speech Recognition not available");
+            Log.e("VoiceListener", "Speech recognition not available");
             stopSelf();
             return;
         }
@@ -64,7 +62,6 @@ public class VoiceListenerService extends Service {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, new Locale("hi", "IN"));
-        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override public void onReadyForSpeech(Bundle params) {}
@@ -72,41 +69,36 @@ public class VoiceListenerService extends Service {
             @Override public void onRmsChanged(float rmsdB) {}
             @Override public void onBufferReceived(byte[] buffer) {}
             @Override public void onEndOfSpeech() {}
+            @Override public void onPartialResults(Bundle partialResults) {}
+            @Override public void onEvent(int eventType, Bundle params) {}
 
             @Override
             public void onError(int error) {
-                Log.e("VoiceListener", "SpeechRecognizer error: " + error);
-                restartListening(); // 🔁 Try again automatically
+                Log.e("VoiceListener", "Error: " + error);
+                resetRecognizer();
             }
 
             @Override
             public void onResults(Bundle results) {
                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
-                    String command = matches.get(0).toLowerCase();
-                    Log.d("VoiceListener", "Command: " + command);
-                    CommandHandler.handleCommand(getApplicationContext(), command);
+                    String command = matches.get(0);
+                    Log.i("VoiceCommand", "Detected: " + command);
+                    CommandHandler.handleCommand(VoiceListenerService.this, command);
                 }
-                restartListening(); // 🔁 Keep listening
+                resetRecognizer();
             }
-
-            @Override public void onPartialResults(Bundle partialResults) {}
-            @Override public void onEvent(int eventType, Bundle params) {}
         });
 
         speechRecognizer.startListening(intent);
-        Log.d("VoiceListener", "Listening started...");
     }
 
-    private void restartListening() {
-        try {
-            if (speechRecognizer != null) {
-                speechRecognizer.destroy();
-            }
-        } catch (Exception e) {
-            Log.e("VoiceListener", "Error in restartListening: " + e.getMessage());
+    private void resetRecognizer() {
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+            speechRecognizer = null;
         }
-        startListening();
+        startSpeechRecognition(); // Restart listener
     }
 
     @Override
