@@ -1,36 +1,46 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.voiceavtar">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Added for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Android 15 required permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:allowBackup="true"
         android:label="Voice Avtar"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="34">
+        
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Updated services with foregroundServiceType -->
         <service
             android:name=".services.FloatingMicService"
             android:exported="false"
-            android:foregroundServiceType="microphone" /> <!-- Android 12+ fix -->
+            android:foregroundServiceType="microphone|mediaProjection"
+            android:stopWithTask="false"/>
         
         <service
             android:name=".services.VoiceListenerService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone"
+            android:stopWithTask="false"/>
 
     </application>
 </manifest>
