@@ -11,6 +11,7 @@ jobs:
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx2048m -Dfile.encoding=UTF-8"
 
     steps:
       - name: Checkout Repository
@@ -25,16 +26,19 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          build-tools-version: 34.0.0
+          ndk-version: '25.2.9519653'
 
-      - name: Create Gradle Wrapper
+      - name: Create Minimal Gradle Setup
         run: |
-          # Create minimal gradle setup
+          # Create minimal settings.gradle
           echo "rootProject.name = 'VoiceAvtar'" > settings.gradle
           echo "include ':app'" >> settings.gradle
           
           # Create gradle wrapper properties
           mkdir -p gradle/wrapper
-          cat << EOF > gradle/wrapper/gradle-wrapper.properties
+          cat > gradle/wrapper/gradle-wrapper.properties <<EOF
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
@@ -43,7 +47,7 @@ jobs:
           EOF
           
           # Download gradle wrapper
-          curl -sLO https://raw.githubusercontent.com/gradle/gradle/master/gradlew
+          curl -sL -o gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
           chmod +x gradlew
           
           # Download wrapper jar
@@ -52,7 +56,13 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          # Disable Gradle daemon and increase memory
+          ./gradlew :app:assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --info \
+            --max-workers=2 \
+            -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
