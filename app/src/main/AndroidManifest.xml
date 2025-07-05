@@ -1,14 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.voiceavtar">
 
-    <!-- 🎤 Voice/Mic access -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-
-    <!-- 🪟 Overlay access -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
-    <!-- 🚦 Foreground Service for mic -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Added for Android 13+ -->
 
     <application
         android:allowBackup="true"
@@ -24,16 +21,16 @@
             </intent-filter>
         </activity>
 
+        <!-- Updated services with foregroundServiceType -->
         <service
             android:name=".services.FloatingMicService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
-
+            android:foregroundServiceType="microphone" /> <!-- Android 12+ fix -->
+        
         <service
             android:name=".services.VoiceListenerService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
     </application>
-
 </manifest>
