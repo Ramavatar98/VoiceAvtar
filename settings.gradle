@@ -1,8 +1,9 @@
 pluginManagement {
     repositories {
-        google() // ✅ Android plugins के लिए आवश्यक
+        google()
         gradlePluginPortal()
         mavenCentral()
+        maven { url "https://jitpack.io" } // optional if you need JitPack
     }
 }
 
@@ -11,6 +12,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://jitpack.io" } // optional
     }
 }
 
