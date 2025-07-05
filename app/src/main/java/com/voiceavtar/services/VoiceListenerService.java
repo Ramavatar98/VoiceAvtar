@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle; // Added import
 import android.os.IBinder;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -60,7 +61,7 @@ public class VoiceListenerService extends Service {
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM); // Fixed typo
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, new Locale("hi", "IN"));
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
